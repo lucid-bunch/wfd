@@ -26,17 +26,17 @@ func main() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	fmt.Print("\nWhat's For Dinner v1.0\n")
-	fmt.Print("======================\n")
+	fmt.Print("======================\n\n")
 	time.Sleep(sleep)
-	fmt.Printf(" Måndag: %s\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Mån:\t%s\n\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Tisdag: %s\n", getResults(fmt.Sprintf("%s/fisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Tis:\t%s\n\n", getResults(fmt.Sprintf("%s/fisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Onsdag: %s\n", getResults(fmt.Sprintf("%s/kyckling%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Ons:\t%s\n\n", getResults(fmt.Sprintf("%s/kyckling%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf("Torsdag: %s\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf("Tors:\t%s\n\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Fredag: %s\n", getResults(fmt.Sprintf("%s/kott%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Fre:\t%s\n\n", getResults(fmt.Sprintf("%s/kott%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
 	os.Exit(0)
 }
@@ -68,7 +68,18 @@ func getToken(url string) string {
 	return data.AccessToken
 }
 
-func getResults(url, token string) []string {
+type RecipeCard struct {
+	AbsolutURL  string `json:"absoluteUrl"`
+	CookingTime string `json:"cookingTime"`
+	Difficulty  string `json:"difficulty"`
+	Title       string `json:"title"`
+}
+
+func (r RecipeCard) String() string {
+	return fmt.Sprintf("%s\n\n\tNivå: %s, %s\n\tLänk: %s", r.Title, r.Difficulty, r.CookingTime, r.AbsolutURL)
+}
+
+func getResults(url, token string) []RecipeCard {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
@@ -86,9 +97,7 @@ func getResults(url, token string) []string {
 
 	data := struct {
 		PageDTO struct {
-			RecipeCards []struct {
-				Title string `json:"title"`
-			} `json:"recipeCards"`
+			RecipeCards []RecipeCard `json:"recipeCards"`
 		} `json:"pageDto"`
 	}{}
 
@@ -97,10 +106,5 @@ func getResults(url, token string) []string {
 		panic(err)
 	}
 
-	titles := make([]string, len(data.PageDTO.RecipeCards))
-	for i, recipe := range data.PageDTO.RecipeCards {
-		titles[i] = recipe.Title
-	}
-
-	return titles
+	return data.PageDTO.RecipeCards
 }
