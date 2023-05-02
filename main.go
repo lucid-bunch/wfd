@@ -17,7 +17,7 @@ func main() {
 	}
 
 	tURL := os.Getenv("TOKEN_URL")
-	token := getToken(tURL)
+	token := fetchAccessToken(tURL)
 	sURL := os.Getenv("SEARCH_URL") + "?url="
 	filters := "/huvudratt/barn/"
 	seed := 48
@@ -31,22 +31,22 @@ func main() {
 	time.Sleep(sleep)
 	fmt.Printf(" Mån:\t%s\n\n", simple)
 	time.Sleep(sleep)
-	fmt.Printf(" Tis:\t%s\n\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Tis:\t%s\n\n", fetchRecipeCards(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Ons:\t%s\n\n", getResults(fmt.Sprintf("%s/fisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Ons:\t%s\n\n", fetchRecipeCards(fmt.Sprintf("%s/fisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
 	fmt.Printf("Tors:\t%s\n\n", simple)
 	time.Sleep(sleep)
-	fmt.Printf(" Fre:\t%s\n\n", getResults(fmt.Sprintf("%s/kyckling%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Fre:\t%s\n\n", fetchRecipeCards(fmt.Sprintf("%s/kyckling%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Lör:\t%s\n\n", getResults(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Lör:\t%s\n\n", fetchRecipeCards(fmt.Sprintf("%s/vegetarisk%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
-	fmt.Printf(" Sön:\t%s\n\n", getResults(fmt.Sprintf("%s/kott%s%s", sURL, filters, params), token)[r.Intn(seed)])
+	fmt.Printf(" Sön:\t%s\n\n", fetchRecipeCards(fmt.Sprintf("%s/kott%s%s", sURL, filters, params), token)[r.Intn(seed)])
 	time.Sleep(sleep)
 	os.Exit(0)
 }
 
-func getToken(url string) string {
+func fetchAccessToken(url string) string {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
@@ -84,7 +84,7 @@ func (r RecipeCard) String() string {
 	return fmt.Sprintf("%s\n\n\tNivå: %s, %s\n\tLänk: %s", r.Title, r.Difficulty, r.CookingTime, r.AbsolutURL)
 }
 
-func getResults(url, token string) []RecipeCard {
+func fetchRecipeCards(url, token string) []RecipeCard {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
