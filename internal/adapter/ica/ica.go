@@ -2,22 +2,32 @@ package ica
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type Service struct {
-	client *http.Client
+	client    *http.Client
+	random    *rand.Rand
+	searchURL string
+	tokenURL  string
 }
 
-func NewService() *Service {
+func NewService(sURL, tURL string) *Service {
 	client := http.Client{}
 	return &Service{
-		client: &client,
+		client:    &client,
+		random:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		searchURL: sURL,
+		tokenURL:  tURL,
 	}
 }
 
-func (s *Service) AccessToken(url string) string {
-	req, err := http.NewRequest("GET", url, nil)
+func (s *Service) AccessToken() string {
+	req, err := http.NewRequest("GET", s.tokenURL, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +52,10 @@ func (s *Service) AccessToken(url string) string {
 	return data.AccessToken
 }
 
-func (s *Service) RecipeCards(url, token string) []RecipeCard {
+func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCard {
+	time.Sleep(2 * time.Second) // server doesn't like too many requests in a short time
+	fmt.Print(".")
+	url := fmt.Sprintf("%s?url=%s/huvudratt/barn/&onlyEnabled=true&sortOption=rating&take=48", s.searchURL, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
@@ -68,5 +81,25 @@ func (s *Service) RecipeCards(url, token string) []RecipeCard {
 		panic(err)
 	}
 
-	return data.PageDTO.RecipeCards
+	filteredRecipeCards := filteredRecipeCards(data.PageDTO.RecipeCards, excludedIDs...)
+
+	return filteredRecipeCards[s.random.Intn(len(filteredRecipeCards))]
+}
+
+func filteredRecipeCards(recipeCards []RecipeCard, excludeIDs ...string) []RecipeCard {
+	filteredRecipeCards := []RecipeCard{}
+	for _, recipeCard := range recipeCards {
+		exclude := false
+		for _, id := range excludeIDs {
+			if strconv.Itoa(recipeCard.ID) == id {
+				exclude = true
+				break
+			}
+		}
+		if !exclude {
+			filteredRecipeCards = append(filteredRecipeCards, recipeCard)
+		}
+	}
+
+	return filteredRecipeCards
 }

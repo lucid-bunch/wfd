@@ -3,6 +3,7 @@ package ica
 import "fmt"
 
 type RecipeCard struct {
+	ID          int    `json:"id"`
 	AbsolutURL  string `json:"absoluteUrl"`
 	CookingTime string `json:"cookingTime"`
 	Difficulty  string `json:"difficulty"`
