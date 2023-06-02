@@ -65,12 +65,15 @@ var rootCmd = &cobra.Command{
 		svc := ica.NewService(os.Getenv("SEARCH_URL"), os.Getenv("TOKEN_URL"))
 		token := svc.AccessToken()
 
-		recipes := []ica.RecipeCard{
-			svc.RecipeCard(token, "/vegetarisk", excludeIDs...),
-			svc.RecipeCard(token, "/fisk", excludeIDs...),
-			svc.RecipeCard(token, "/kyckling", excludeIDs...),
-			svc.RecipeCard(token, "/vegetarisk", excludeIDs...),
-			svc.RecipeCard(token, "/kott", excludeIDs...),
+		types, err := cmd.Flags().GetStringArray("type")
+		if err != nil {
+			fmt.Printf("Error reading recipe types: %s\n\n", err)
+		}
+
+		recipes := []ica.RecipeCard{}
+		for _, t := range types {
+			recipes = append(recipes, svc.RecipeCard(token, "/"+t, excludeIDs...))
+			delay()
 		}
 
 		fmt.Printf("\n- printing recipes\n\n")
@@ -98,6 +101,7 @@ func init() {
 		panic(err)
 	}
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.Flags().StringArrayP("type", "t", []string{"vegetarisk", "fisk", "kyckling", "vegetarisk", "kott"}, "type of recipe")
 }
 
 func Execute() {
