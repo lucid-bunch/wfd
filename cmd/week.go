@@ -17,6 +17,7 @@ var weekCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		defaultRecipe := ica.RecipeCard{Title: "Fil, flingor, macka och ägg", Difficulty: "Enkel", CookingTime: "Under 15 min", AbsolutURL: "N/A"}
 		cooldown := 4
+		delay := func() { time.Sleep(1 * time.Second) }
 
 		cPath := os.Getenv("COOLDOWN_PATH")
 		cStore := store.New(cPath)
@@ -26,7 +27,7 @@ var weekCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("Error reading from recipe cooldown store: %s\n\n", err)
 		}
-		time.Sleep(2 * time.Second)
+		delay()
 
 		fmt.Printf("- applying %d week recipe cooldown\n", cooldown)
 		var excludeIDs []string
@@ -42,7 +43,7 @@ var weekCmd = &cobra.Command{
 		default:
 			excludeIDs = []string{}
 		}
-		time.Sleep(2 * time.Second)
+		delay()
 
 		bPath := os.Getenv("BLOCK_PATH")
 		bStore := store.New(bPath)
@@ -52,13 +53,13 @@ var weekCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("Error reading from recipe block store: %s\n\n", err)
 		}
-		time.Sleep(2 * time.Second)
+		delay()
 
 		fmt.Printf("- applying blocked recipe filter\n")
 		for _, row := range bData {
 			excludeIDs = append(excludeIDs, row...)
 		}
-		time.Sleep(2 * time.Second)
+		delay()
 
 		fmt.Printf("- generating weekly dinner plans")
 		svc := ica.NewService(os.Getenv("SEARCH_URL"), os.Getenv("TOKEN_URL"))
@@ -80,6 +81,7 @@ var weekCmd = &cobra.Command{
 				ids = append(ids, fmt.Sprintf("%d", recipe.ID))
 			}
 		}
+		delay()
 
 		fmt.Printf("\n- printing weekly dinner plans\n\n")
 		fmt.Printf("Mon:\t%s\n\n", week["Mon"])
@@ -89,11 +91,14 @@ var weekCmd = &cobra.Command{
 		fmt.Printf("Fri:\t%s\n\n", week["Fri"])
 		fmt.Printf("Sat:\t%s\n\n", week["Sat"])
 		fmt.Printf("Sun:\t%s\n\n", week["Sun"])
+		delay()
 
 		fmt.Printf("- writing to recipe store\n")
 		if err := cStore.Write(ids); err != nil {
 			fmt.Printf("Error writing to store: %s\n\n", err)
 		}
+		delay()
+
 		fmt.Printf("- done\n")
 	},
 }

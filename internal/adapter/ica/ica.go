@@ -53,7 +53,6 @@ func (s *Service) AccessToken() string {
 }
 
 func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCard {
-	time.Sleep(2 * time.Second) // server doesn't like too many requests in a short time
 	fmt.Print(".")
 	url := fmt.Sprintf("%s?url=%s/huvudratt/barn/&onlyEnabled=true&sortOption=rating&take=48", s.searchURL, path)
 	req, err := http.NewRequest("GET", url, nil)
