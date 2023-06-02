@@ -18,29 +18,45 @@ var weekCmd = &cobra.Command{
 		defaultRecipe := ica.RecipeCard{Title: "Fil, flingor, macka och ägg", Difficulty: "Enkel", CookingTime: "Under 15 min", AbsolutURL: "N/A"}
 		cooldown := 4
 
-		path := os.Getenv("STORE_PATH")
-		st := store.New(path)
+		cPath := os.Getenv("COOLDOWN_PATH")
+		cStore := store.New(cPath)
 
-		fmt.Printf("- reading from recipe store\n")
-		data, err := st.Read()
+		fmt.Printf("- reading from recipe cooldown store\n")
+		cData, err := cStore.Read()
 		if err != nil {
-			fmt.Printf("Error reading from store: %s\n\n", err)
+			fmt.Printf("Error reading from recipe cooldown store: %s\n\n", err)
 		}
 		time.Sleep(2 * time.Second)
 
 		fmt.Printf("- applying %d week recipe cooldown\n", cooldown)
 		var excludeIDs []string
 		switch {
-		case len(data) > cooldown:
-			for i := len(data) - cooldown; i < len(data); i++ {
-				excludeIDs = append(excludeIDs, data[i]...)
+		case len(cData) > cooldown:
+			for i := len(cData) - cooldown; i < len(cData); i++ {
+				excludeIDs = append(excludeIDs, cData[i]...)
 			}
-		case len(data) <= cooldown:
-			for _, row := range data {
+		case len(cData) <= cooldown:
+			for _, row := range cData {
 				excludeIDs = append(excludeIDs, row...)
 			}
 		default:
 			excludeIDs = []string{}
+		}
+		time.Sleep(2 * time.Second)
+
+		bPath := os.Getenv("BLOCK_PATH")
+		bStore := store.New(bPath)
+
+		fmt.Printf("- reading from recipe block store\n")
+		bData, err := bStore.Read()
+		if err != nil {
+			fmt.Printf("Error reading from recipe block store: %s\n\n", err)
+		}
+		time.Sleep(2 * time.Second)
+
+		fmt.Printf("- applying blocked recipe filter\n")
+		for _, row := range bData {
+			excludeIDs = append(excludeIDs, row...)
 		}
 		time.Sleep(2 * time.Second)
 
@@ -75,7 +91,7 @@ var weekCmd = &cobra.Command{
 		fmt.Printf("Sun:\t%s\n\n", week["Sun"])
 
 		fmt.Printf("- writing to recipe store\n")
-		if err := st.Write(ids); err != nil {
+		if err := cStore.Write(ids); err != nil {
 			fmt.Printf("Error writing to store: %s\n\n", err)
 		}
 		fmt.Printf("- done\n")
