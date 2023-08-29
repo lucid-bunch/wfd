@@ -54,7 +54,7 @@ func (s *Service) AccessToken() string {
 
 func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCard {
 	fmt.Print(".")
-	url := fmt.Sprintf("%s?url=%s/huvudratt/barn/&onlyEnabled=true&sortOption=rating&take=48", s.searchURL, path)
+	url := fmt.Sprintf("%s?url=%s/huvudratt/&onlyEnabled=true&sortOption=rating&take=48", s.searchURL, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)
