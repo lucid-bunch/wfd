@@ -34,5 +34,10 @@ func (s *Store) Write(data []string) error {
 	defer file.Close()
 
 	w := csv.NewWriter(file)
-	return w.Write(data)
+	if err := w.Write(data); err != nil {
+		return err
+	}
+	w.Flush()
+
+	return nil
 }
