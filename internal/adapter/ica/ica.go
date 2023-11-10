@@ -2,6 +2,7 @@ package ica
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -17,26 +18,29 @@ type Service struct {
 }
 
 func NewService(sURL, tURL string) *Service {
-	client := http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
 	return &Service{
-		client:    &client,
+		client:    client,
 		random:    rand.New(rand.NewSource(time.Now().UnixNano())),
 		searchURL: sURL,
 		tokenURL:  tURL,
 	}
 }
 
-func (s *Service) AccessToken() string {
+func (s *Service) AccessToken() (string, error) {
 	req, err := http.NewRequest("GET", s.tokenURL, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	req.Header.Set("Accept", "application/json")
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer res.Body.Close()
 
@@ -46,18 +50,18 @@ func (s *Service) AccessToken() string {
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return data.AccessToken
+	return data.AccessToken, nil
 }
 
-func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCard {
+func (s *Service) RecipeCard(token, path string, excludedIDs ...string) (RecipeCard, error) {
 	fmt.Print(".")
 	url := fmt.Sprintf("%s?url=%s/huvudratt/&onlyEnabled=true&sortOption=rating&take=48", s.searchURL, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(err)
+		return RecipeCard{}, err
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -65,7 +69,7 @@ func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCa
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		panic(err)
+		return RecipeCard{}, err
 	}
 	defer res.Body.Close()
 
@@ -77,25 +81,27 @@ func (s *Service) RecipeCard(token, path string, excludedIDs ...string) RecipeCa
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
-		panic(err)
+		return RecipeCard{}, err
 	}
 
 	filteredRecipeCards := filteredRecipeCards(data.PageDTO.RecipeCards, excludedIDs...)
 
-	return filteredRecipeCards[s.random.Intn(len(filteredRecipeCards))]
+	if len(filteredRecipeCards) == 0 {
+		return RecipeCard{}, errors.New("no recipe cards found")
+	}
+
+	return filteredRecipeCards[s.random.Intn(len(filteredRecipeCards))], nil
 }
 
 func filteredRecipeCards(recipeCards []RecipeCard, excludeIDs ...string) []RecipeCard {
+	excludeMap := make(map[string]bool)
+	for _, id := range excludeIDs {
+		excludeMap[id] = true
+	}
+
 	filteredRecipeCards := []RecipeCard{}
 	for _, recipeCard := range recipeCards {
-		exclude := false
-		for _, id := range excludeIDs {
-			if strconv.Itoa(recipeCard.ID) == id {
-				exclude = true
-				break
-			}
-		}
-		if !exclude {
+		if !excludeMap[strconv.Itoa(recipeCard.ID)] {
 			filteredRecipeCards = append(filteredRecipeCards, recipeCard)
 		}
 	}

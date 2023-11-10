@@ -23,12 +23,7 @@ func (s *Store) Read() ([][]string, error) {
 	defer f.Close()
 
 	reader := csv.NewReader(f)
-	rows, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	return rows, nil
+	return reader.ReadAll()
 }
 
 func (s *Store) Write(data []string) error {
@@ -39,10 +34,5 @@ func (s *Store) Write(data []string) error {
 	defer file.Close()
 
 	w := csv.NewWriter(file)
-	defer w.Flush()
-	if err := w.Write(data); err != nil {
-		return err
-	}
-
-	return nil
+	return w.Write(data)
 }

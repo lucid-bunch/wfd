@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 	Long:  "What's For Dinner is a tool that helps with dinner planning",
 	Run: func(cmd *cobra.Command, args []string) {
 		cooldown := 4
-		delay := func() { time.Sleep(1 * time.Second) }
+		delay := func() { time.Sleep(500 * time.Millisecond) }
 
 		cPath := os.Getenv("COOLDOWN_PATH")
 		cStore := store.New(cPath)
@@ -31,17 +31,8 @@ var rootCmd = &cobra.Command{
 
 		fmt.Printf("- applying %d week recipe cooldown\n", cooldown)
 		var excludeIDs []string
-		switch {
-		case len(cData) > cooldown:
-			for i := len(cData) - cooldown; i < len(cData); i++ {
-				excludeIDs = append(excludeIDs, cData[i]...)
-			}
-		case len(cData) <= cooldown:
-			for _, row := range cData {
-				excludeIDs = append(excludeIDs, row...)
-			}
-		default:
-			excludeIDs = []string{}
+		for i := max(0, len(cData)-cooldown); i < len(cData); i++ {
+			excludeIDs = append(excludeIDs, cData[i]...)
 		}
 		delay()
 
@@ -63,7 +54,11 @@ var rootCmd = &cobra.Command{
 
 		fmt.Printf("- generating recipes")
 		svc := ica.NewService(os.Getenv("SEARCH_URL"), os.Getenv("TOKEN_URL"))
-		token := svc.AccessToken()
+		token, err := svc.AccessToken()
+		if err != nil {
+			fmt.Printf("Error getting access token: %s\n\n", err)
+			return
+		}
 
 		types, err := cmd.Flags().GetStringArray("type")
 		if err != nil {
@@ -72,7 +67,12 @@ var rootCmd = &cobra.Command{
 
 		recipes := []ica.RecipeCard{}
 		for _, t := range types {
-			recipes = append(recipes, svc.RecipeCard(token, "/"+t, excludeIDs...))
+			recipe, err := svc.RecipeCard(token, "/"+t, excludeIDs...)
+			if err != nil {
+				fmt.Printf("Error getting recipe card: %s\n\n", err)
+				continue
+			}
+			recipes = append(recipes, recipe)
 			delay()
 		}
 
