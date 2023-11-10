@@ -1,4 +1,5 @@
 # wfd
+![build status](https://github.com/lucid-bunch/wfd/actions/workflows/go.yml/badge.svg)
 
 wfd (What's For Dinner) is a tool that helps with dinner planning. It reads from a recipe cooldown store and a recipe block store, applies filters, and generates recipes.
 
